@@ -106,27 +106,36 @@ public class Game {
 
     private void Update(KeyStroke key) throws IOException {
         // First clear the current position of the player on the screen
-        terminal.setCursorPosition(xPos,yPos);
+        terminal.setCursorPosition(xPos, yPos);
         terminal.putString(" ");
 
+
         // Allow the player to move using the arrow keys
-        switch(key.getKeyType())
-        {
+        switch (key.getKeyType()) {
             case ArrowUp:
-                if (levelGrid[xPos][yPos - 1] != 1)
-                yPos--;
+                if (yPos - 1 >= 0 &&
+                        levelGrid[xPos][yPos - 1] != 1 &&
+                        (xPos + 1 >= screenWidth || levelGrid[xPos + 1][yPos - 1] != 1) &&
+                        (xPos - 1 < 0 || levelGrid[xPos - 1][yPos - 1] != 1))
+                    yPos--;
                 break;
 
             case ArrowRight:
-                xPos++;
+                if (xPos + 2 < screenWidth && levelGrid[xPos + 2][yPos] != 1)
+                    xPos++;
                 break;
 
             case ArrowDown:
-                yPos++;
+                if (yPos + 1 < screenHeight &&
+                        levelGrid[xPos][yPos + 1] != 1 &&
+                        (xPos + 1 >= screenWidth || levelGrid[xPos + 1][yPos + 1] != 1) &&
+                        (xPos - 1 < 0 || levelGrid[xPos - 1][yPos + 1] != 1))
+                    yPos++;
                 break;
 
             case ArrowLeft:
-                xPos--;
+                if (xPos - 2 >= 0 && levelGrid[xPos - 2][yPos] != 1)
+                    xPos--;
                 break;
         }
         drawCharacter();
