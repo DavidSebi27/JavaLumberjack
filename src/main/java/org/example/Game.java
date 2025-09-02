@@ -12,6 +12,12 @@ public class Game {
     private int xPos = 0;
     private int yPos = 0;
 
+    // score
+    private int score = 0;
+
+    private int bossHealth;
+    private boolean bossActive = false;
+
     // 2D array to contain the level data
     private int[][] levelGrid;
 
@@ -41,6 +47,9 @@ public class Game {
         drawLevel();
         // Draw the character at the starting position
         drawCharacter();
+
+        // Draw score
+        drawScore();
 
         // Loop endlessly, processing for keystrokes
         while (true)
@@ -91,6 +100,11 @@ public class Game {
                     terminal.setCursorPosition(x,y);
                     terminal.putString("\uD83C\uDF32");
                 }
+                else if (levelGrid[x][y] == 10)
+                {
+                    terminal.setCursorPosition(x,y);
+                    terminal.putString("\uD83C\uDF33");
+                }
             }
         }
         terminal.flush();
@@ -98,9 +112,24 @@ public class Game {
 
     private void drawCharacter() throws IOException {
         // Draw the player at the desired position
-        terminal.setForegroundColor(TextColor.ANSI.WHITE);
+        if (score >= 30)
+        {
+            terminal.setForegroundColor(TextColor.ANSI.CYAN_BRIGHT);
+        }
+        else
+        {
+            terminal.setForegroundColor(TextColor.ANSI.WHITE);
+        }
         terminal.setCursorPosition(xPos,yPos);
         terminal.putString("\uD83D\uDC68");
+        terminal.flush();
+    }
+
+    private void drawScore() throws IOException
+    {
+        terminal.setForegroundColor(TextColor.ANSI.RED_BRIGHT);
+        terminal.setCursorPosition(screenWidth - 16,0);
+        terminal.putString("Total score: "+score+"");
         terminal.flush();
     }
 
@@ -116,12 +145,14 @@ public class Game {
                 if (yPos - 1 >= 0 &&
                         levelGrid[xPos][yPos - 1] != 1 &&
                         (xPos + 1 >= screenWidth || levelGrid[xPos + 1][yPos - 1] != 1) &&
-                        (xPos - 1 < 0 || levelGrid[xPos - 1][yPos - 1] != 1))
+                        (xPos - 1 < 0 || levelGrid[xPos - 1][yPos - 1] != 1) && levelGrid[xPos][yPos - 1] != 10 &&
+                        (xPos + 1 >= screenWidth || levelGrid[xPos + 1][yPos - 1] != 10) &&
+                        (xPos - 1 < 0 || levelGrid[xPos - 1][yPos - 1] != 10))
                     yPos--;
                 break;
 
             case ArrowRight:
-                if (xPos + 2 < screenWidth && levelGrid[xPos + 2][yPos] != 1)
+                if (xPos + 1 < screenWidth && levelGrid[xPos + 2][yPos] != 1 && levelGrid[xPos + 2][yPos] != 10)
                     xPos++;
                 break;
 
@@ -129,15 +160,102 @@ public class Game {
                 if (yPos + 1 < screenHeight &&
                         levelGrid[xPos][yPos + 1] != 1 &&
                         (xPos + 1 >= screenWidth || levelGrid[xPos + 1][yPos + 1] != 1) &&
-                        (xPos - 1 < 0 || levelGrid[xPos - 1][yPos + 1] != 1))
+                        (xPos - 1 < 0 || levelGrid[xPos - 1][yPos + 1] != 1) && levelGrid[xPos][yPos + 1] != 10 &&
+                        (xPos + 1 >= screenWidth || levelGrid[xPos + 1][yPos + 1] != 10) &&
+                        (xPos - 1 < 0 || levelGrid[xPos - 1][yPos + 1] != 10))
                     yPos++;
                 break;
 
             case ArrowLeft:
-                if (xPos - 2 >= 0 && levelGrid[xPos - 2][yPos] != 1)
+                if (xPos - 2 >= 0 && levelGrid[xPos - 2][yPos] != 1 && levelGrid[xPos - 2][yPos] != 10)
                     xPos--;
                 break;
         }
         drawCharacter();
+
+        // Check for 'e' key press for tree cutting
+        if (key.getKeyType() == KeyType.Character && key.getCharacter() == 'e')
+        {
+            boolean treeLeft = (xPos - 2 >= 0 && levelGrid[xPos - 2][yPos] == 1);
+            boolean treeRight = (xPos + 2 < screenWidth && levelGrid[xPos + 2][yPos] == 1);
+            boolean isBoss = (levelGrid[xPos - 2][yPos] == 10
+                    ||  levelGrid[xPos + 2][yPos] == 10
+                    || levelGrid[xPos][yPos - 2] == 10
+                    || levelGrid[xPos][yPos + 2] == 10);
+
+            if (isBoss)
+            {
+                bossHealth--;
+                if (bossHealth <= 0)
+                {
+                    bossActive = false;
+                }
+            }
+            if (treeLeft)
+            {
+                levelGrid[xPos - 2][yPos] = 0;
+                terminal.bell();
+                drawLevel();
+                drawCharacter();
+                score++;
+                drawScore();
+            }
+            else if  (treeRight)
+            {
+                levelGrid[xPos + 2][yPos] = 0;
+                terminal.bell();
+                drawLevel();
+                drawCharacter();
+                score++;
+                drawScore();
+            }
+
+            if (score % 10 == 0) {
+                // Play 3 quick beeps with short pauses
+                terminal.bell();
+                try {
+                    Thread.sleep(150); // Wait 200 milliseconds
+                } catch (InterruptedException e) {
+                    // Usually just ignore this
+                }
+                terminal.bell();
+                try {
+                    Thread.sleep(150);
+                } catch (InterruptedException e) {
+                }
+                terminal.bell();
+                try {
+                    Thread.sleep(150);
+                } catch (InterruptedException e) {
+                }
+                terminal.bell();
+            }
+
+            if (score >= 10 && !bossActive)
+            {
+                // clear trees to prepare for boss
+                for (int x = 0; x < screenWidth; x++)
+                {
+                    for (int y = 0; y < screenHeight; y++)
+                    {
+                        levelGrid[x][y] = 0;
+                    }
+                }
+
+                // After clearing, add the boss
+                int bossX = screenWidth / 2;
+                int bossY = screenHeight / 2;
+                levelGrid[bossX][bossY] = 10; // Use 10 to represent boss
+
+                // Set boss flags
+                bossActive = true;
+                bossHealth = 10;
+
+                drawLevel();
+                drawCharacter();
+                drawScore();
+            }
+
+        }
     }
 }
