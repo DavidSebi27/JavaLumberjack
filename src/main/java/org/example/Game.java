@@ -40,6 +40,7 @@ public class Game {
     private static final int H_COLL_OFFSET = 2;   // for checking emoji/tree/boss that render 2 columns wide
     private static final int V_COLL_OFFSET = 1;
 
+    private AudioManager audioManager =  new AudioManager();
     public Game(Terminal terminal) {
         try {
             this.terminal = terminal;
@@ -222,6 +223,8 @@ public class Game {
 
     private void spawnBoss() throws IOException
     {
+
+        audioManager.startBackgroundMusic("C:/Users/david/IdeaProjects/JavaLumberjack/sounds/boss_music.wav");
         clearLevelToEmpty();
 
         bossActive = true;
@@ -296,7 +299,9 @@ public class Game {
                 boolean hit = tryAttackBoss();
                 if (hit) {
                     terminal.bell();
-                    if (bossHealth <= 0) {
+                    if (bossHealth <= 0)
+                    {
+                        audioManager.stopBackgroundMusic();
                         bossActive = false;
                         drawVictory();
                         // Exit the game after victory
@@ -314,26 +319,32 @@ public class Game {
                 int leftX  = xPos - H_COLL_OFFSET;
                 int rightX = xPos + H_COLL_OFFSET;
 
-                if (inBounds(leftX, yPos) && levelGrid[leftX][yPos] == TILE_TREE) {
+                if (inBounds(leftX, yPos) && levelGrid[leftX][yPos] == TILE_TREE)
+                {
                     levelGrid[leftX][yPos] = TILE_EMPTY;
                     chopped = true;
-                } else if (inBounds(rightX, yPos) && levelGrid[rightX][yPos] == TILE_TREE) {
+                } else if (inBounds(rightX, yPos) && levelGrid[rightX][yPos] == TILE_TREE)
+                {
                     levelGrid[rightX][yPos] = TILE_EMPTY;
                     chopped = true;
-                } else {
+                } else
+                {
                     // also try up/down by 1 row (so you can chop vertically if you want)
                     int upY = yPos - V_COLL_OFFSET;
                     int dnY = yPos + V_COLL_OFFSET;
-                    if (inBounds(xPos, upY) && levelGrid[xPos][upY] == TILE_TREE) {
+                    if (inBounds(xPos, upY) && levelGrid[xPos][upY] == TILE_TREE)
+                    {
                         levelGrid[xPos][upY] = TILE_EMPTY;
                         chopped = true;
-                    } else if (inBounds(xPos, dnY) && levelGrid[xPos][dnY] == TILE_TREE) {
+                    } else if (inBounds(xPos, dnY) && levelGrid[xPos][dnY] == TILE_TREE)
+                    {
                         levelGrid[xPos][dnY] = TILE_EMPTY;
                         chopped = true;
                     }
                 }
 
-                if (chopped) {
+                if (chopped)
+                {
                     terminal.bell();
                     score++;
                     drawLevel();
@@ -343,7 +354,8 @@ public class Game {
                 }
 
                 // spawn boss at 100 score
-                if (score >= 10 && !bossActive) {
+                if (score >= 10 && !bossActive)
+                {
                     spawnBoss();
                 }
             }
@@ -351,7 +363,8 @@ public class Game {
     }
 
     // Player attacks boss if exactly adjacent in 4 dirs
-    private boolean tryAttackBoss() throws IOException {
+    private boolean tryAttackBoss() throws IOException
+    {
         if (!bossActive) return false;
 
         int leftX  = xPos - H_COLL_OFFSET;
@@ -372,7 +385,8 @@ public class Game {
         return false;
     }
 
-    private void maybePlayMilestoneJingle() throws IOException {
+    private void maybePlayMilestoneJingle() throws IOException
+    {
         if (score > 0 && score % 10 == 0) {
             terminal.bell();
             try { Thread.sleep(150); } catch (InterruptedException ignored) {}
