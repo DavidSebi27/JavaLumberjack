@@ -31,6 +31,7 @@ public class Game {
     private int screenWidth;
     private int screenHeight;
 
+
     // terminal window
     private Terminal terminal;
 
